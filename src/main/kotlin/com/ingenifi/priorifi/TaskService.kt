@@ -3,15 +3,13 @@ package com.ingenifi.priorifi
 import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
-import com.ingenifi.engine.ClasspathResource
 import com.ingenifi.engine.Engine
-import com.ingenifi.engine.Option
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 
 @Service
-class TaskService(private val taskRepository: TaskRepository) {
+class TaskService(private val taskRepository: TaskRepository, private val validationEngine: Engine) {
     fun createTask(request: Task): Either<List<ValidationError>, Task> {
         return when (val validationOrTask = validate(request)) {
             is Left -> validationOrTask
@@ -20,15 +18,11 @@ class TaskService(private val taskRepository: TaskRepository) {
     }
 
     private fun validate(request: Task): Either<List<ValidationError>, Task> {
-        val validationErrors = Engine(
-            ruleResources = listOf(ClasspathResource("task-service-validations.drl")),
-            facts = listOf(request),
-            options = listOf(Option.TRACK_RULES, Option.SHOW_FACTS)
-        )
-            .executeRules()
+        val validationErrors = validationEngine
+            .clear()
+            .executeRules(facts = listOf(request))
             .retrieveFacts { it is ValidationError }
             .map { it as ValidationError }
-
         return if (validationErrors.isEmpty()) Right(request) else Left(validationErrors)
     }
 }

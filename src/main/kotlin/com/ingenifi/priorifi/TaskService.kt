@@ -1,15 +1,25 @@
 package com.ingenifi.priorifi
 
 import arrow.core.Either
+import arrow.core.Either.Left
+import arrow.core.Either.Right
 import com.ingenifi.engine.ClasspathResource
 import com.ingenifi.engine.Engine
 import com.ingenifi.engine.Option
+import org.springframework.data.mongodb.repository.MongoRepository
+import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
 
 @Service
-class TaskService {
-    fun createTask(request: Task): Mono<Either<List<ValidationError>, Task>> {
+class TaskService(private val taskRepository: TaskRepository) {
+    fun createTask(request: Task): Either<List<ValidationError>, Task> {
+        return when (val validationOrTask = validate(request)) {
+            is Left -> validationOrTask
+            is Right -> Right(taskRepository.save(validationOrTask.value))
+        }
+    }
+
+    private fun validate(request: Task): Either<List<ValidationError>, Task> {
         val validationErrors = Engine(
             ruleResources = listOf(ClasspathResource("task-service-validations.drl")),
             facts = listOf(request),
@@ -19,11 +29,9 @@ class TaskService {
             .retrieveFacts { it is ValidationError }
             .map { it as ValidationError }
 
-        return Mono.just(
-            if (validationErrors.isEmpty())
-                Either.Right(Task("1", request.name, request.description))
-            else Either.Left(validationErrors)
-        )
-
+        return if (validationErrors.isEmpty()) Right(request) else Left(validationErrors)
     }
 }
+
+@Repository
+interface TaskRepository : MongoRepository<Task, String>

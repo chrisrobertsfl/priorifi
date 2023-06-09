@@ -13,7 +13,7 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
     fun createTask(request: Task): Either<List<ValidationError>, Task> {
         return when (val validationOrTask = validate(request)) {
             is Left -> validationOrTask
-            is Right -> Right(taskRepository.save(validationOrTask.value))
+            is Right -> Right(taskRepository.insert(validationOrTask.value))
         }
     }
 
@@ -25,6 +25,14 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
             .map { it as ValidationError }
         return if (validationErrors.isEmpty()) Right(request) else Left(validationErrors)
     }
+    fun findAll(): List<Task> = taskRepository.findAll()
+    fun updateTask(request: Task): Either<List<ValidationError>, Task> {
+        return when (val validationOrTask = validate(request)) {
+            is Left -> validationOrTask
+            is Right -> Right(taskRepository.save(validationOrTask.value))
+        }
+    }
+
 }
 
 @Repository

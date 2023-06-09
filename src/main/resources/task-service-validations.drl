@@ -1,0 +1,10 @@
+package com.ingenifi.priorifi
+
+dialect  "mvel"
+
+rule "task-service-validations"
+    when
+        Task( name.isBlank() )
+    then
+        insert(new ValidationError("Task name is missing"))
+end

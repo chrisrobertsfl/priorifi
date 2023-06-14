@@ -20,8 +20,8 @@ class TaskServiceTest(@Autowired val service: TaskService) {
     }
 
     @Test
-    fun `should succeed when name is there`() {
-        val request = Task(null, "name", "description")
+    fun `should succeed when n ame is there`() {
+        val request = Task(null, "name - with strong id", "description - with strong id")
         service.createTask(request).should {
             it.isRight() shouldBe true
             it.getOrNull()?.asClue { task ->
@@ -30,6 +30,8 @@ class TaskServiceTest(@Autowired val service: TaskService) {
             }
         }
     }
+
+
 
 }
 

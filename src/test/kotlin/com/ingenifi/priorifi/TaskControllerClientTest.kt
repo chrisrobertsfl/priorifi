@@ -79,7 +79,7 @@ class TaskControllerClientTest(@Autowired val webTestClient: WebTestClient, @Aut
     @Test
     fun `should update task`() {
         val inserted = insertTasks(1).first()
-        val request = UpdateTaskRequest(inserted.name, inserted.description + " now updated")
+        val request = UpdateTaskRequest(inserted.id!!, inserted.name, inserted.description + " now updated")
         webTestClient.put()
             .uri("/tasks/{id}", inserted.id)
             .contentType(APPLICATION_JSON)
@@ -92,6 +92,26 @@ class TaskControllerClientTest(@Autowired val webTestClient: WebTestClient, @Aut
                     it.id.shouldNotBeNull()
                     it.name shouldBe request.name
                     it.description shouldBe request.description
+                }
+            }
+    }
+
+    @Test
+    fun `should delete task`() {
+        val inserted = insertTasks(1).first()
+        println("inserted = ${inserted}")
+        val taskId = inserted.id!!
+
+        webTestClient.delete()
+            .uri("/tasks/{id}", taskId)
+            .exchange()
+            .expectStatus().isOk
+            .expectBody<TaskResponse>()
+            .consumeWith { result ->
+                result.responseBody?.asClue {
+                    it.id.shouldNotBeNull()
+                    it.name shouldBe "Task 1"
+                    it.description shouldBe "Description 1"
                 }
             }
     }

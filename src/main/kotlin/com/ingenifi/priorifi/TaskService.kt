@@ -4,8 +4,6 @@ import arrow.core.Either
 import arrow.core.Either.Left
 import arrow.core.Either.Right
 import com.ingenifi.engine.Engine
-import org.springframework.data.mongodb.repository.MongoRepository
-import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 
 @Service
@@ -25,6 +23,7 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
             .map { it as ValidationError }
         return if (validationErrors.isEmpty()) Right(request) else Left(validationErrors)
     }
+
     fun findAll(): List<Task> = taskRepository.findAll()
     fun updateTask(request: Task): Either<List<ValidationError>, Task> {
         return when (val validationOrTask = validate(request)) {
@@ -33,7 +32,13 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
         }
     }
 
+    fun deleteById(id: String): Either<List<ValidationError>, Task> {
+        val found = taskRepository.findById(id)
+        return if (found.isPresent) {
+            taskRepository.deleteById(id)
+            Right(found.get())
+        } else {
+            Left(listOf(ValidationError("Cannot find task by id $id")))
+        }
+    }
 }
-
-@Repository
-interface TaskRepository : MongoRepository<Task, String>

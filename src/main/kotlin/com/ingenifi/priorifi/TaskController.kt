@@ -22,8 +22,16 @@ class TaskController(private val taskService: TaskService) {
 
     @PutMapping("/{id}")
     fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): ResponseEntity<Any> {
-        val updatedTask = request.toTask().copy(id = id)
+        val updatedTask = request.toTask()
         return when (val task = taskService.updateTask(updatedTask)) {
+            is Right -> ok(TaskResponse(task.value))
+            is Left -> badRequest().body(task.value)
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    fun deleteTask(@PathVariable id: String): ResponseEntity<Any> {
+        return when (val task = taskService.deleteById(id)) {
             is Right -> ok(TaskResponse(task.value))
             is Left -> badRequest().body(task.value)
         }

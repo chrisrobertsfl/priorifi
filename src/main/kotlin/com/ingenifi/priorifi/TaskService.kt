@@ -8,10 +8,17 @@ import org.springframework.stereotype.Service
 
 @Service
 class TaskService(private val taskRepository: TaskRepository, private val validationEngine: Engine, private val idGenerator: IdGenerator) {
-    fun createTask(request: Task): Task = taskRepository.insert(validateRequest(request).copy(id = idGenerator.generate()))
-
-
-    data class TaskValidationException(override val message: String = "Something went wrong", val errors: List<ValidationError>) : RuntimeException(message)
+    fun createTask(request: Task): Task {
+        val validateRequest = validateRequest(request)
+        println("validateRequest = ${validateRequest}")
+        println("idGenerator = ${idGenerator}")
+        val id = idGenerator.generate()
+        println("id = ${id}")
+        val copy = validateRequest.copy(id = id)
+        println("taskRepository = ${taskRepository}")
+        println("copy = ${copy}")
+        return taskRepository.insert(copy)
+    }
 
     private fun validateRequest(request: Task): Task {
         val validationErrors = validationEngine

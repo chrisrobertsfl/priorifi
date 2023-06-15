@@ -20,7 +20,7 @@ class TaskServiceTest(@Autowired val service: TaskService) {
 
     @Test
     fun `Create Task should raise exception when name is not there`() {
-        val taskValidationException = assertThrows<TaskService.TaskValidationException> { service.createTask(Task(null, "", "description")) }
+        val taskValidationException = assertThrows<TaskValidationException> { service.createTask(Task(null, "", "description")) }
         taskValidationException shouldBe taskNameMissingException
     }
 
@@ -33,7 +33,7 @@ class TaskServiceTest(@Autowired val service: TaskService) {
     }
     @Test
     fun `Find Task by Id should raise exception when id is not found`() {
-        val taskValidationException = assertThrows<TaskService.TaskValidationException> { service.findId("id") }
+        val taskValidationException = assertThrows<TaskValidationException> { service.findId("id") }
         taskValidationException shouldBe taskNotFoundException
     }
 
@@ -46,13 +46,13 @@ class TaskServiceTest(@Autowired val service: TaskService) {
 
     @Test
     fun `Delete Task by Id should raise exception when id is not found`() {
-        val taskValidationException = assertThrows<TaskService.TaskValidationException> { service.deleteId("id") }
+        val taskValidationException = assertThrows<TaskValidationException> { service.deleteId("id") }
         taskValidationException shouldBe taskNotFoundException
     }
 
     companion object {
-        val taskNotFoundException = TaskService.TaskValidationException("Task not found", listOf(ValidationError("Task with id 'id' not found")))
-        val taskNameMissingException = TaskService.TaskValidationException("Invalid task request", listOf(ValidationError("Task name is missing")))
+        val taskNotFoundException = TaskValidationException("Task not found", listOf(ValidationError("Task with id 'id' not found")))
+        val taskNameMissingException = TaskValidationException("Invalid task request", listOf(ValidationError("Task name is missing")))
     }
 }
 

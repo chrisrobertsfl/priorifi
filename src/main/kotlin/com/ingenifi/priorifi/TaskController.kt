@@ -11,7 +11,16 @@ class TaskController(private val taskService: TaskService) {
 
     @PostMapping
     @ResponseBody
-    fun createTask(@RequestBody request: CreateTaskRequest): TaskResponse = TaskResponse(taskService.createTask(request.toTask()))
+    fun createTask(@RequestBody request: CreateTaskRequest): TaskResponse
+    {
+        println("taskService = ${taskService}")
+        println("request     = ${request}")
+        val toTask = request.toTask()
+        println("toTask      = ${toTask}")
+        val task = taskService.createTask(toTask)
+        println("task        = ${task}")
+        return TaskResponse(task)
+    }
     @GetMapping
     fun getAllTasks(): ResponseEntity<List<TaskResponse>> = ok(taskService.findAll().map { TaskResponse(it) })
 

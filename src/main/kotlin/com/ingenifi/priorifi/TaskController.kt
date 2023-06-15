@@ -21,6 +21,10 @@ class TaskController(private val taskService: TaskService) {
     @ResponseBody
     fun findTaskById(@PathVariable id: String): TaskResponse = TaskResponse(taskService.findById(id))
 
+    @DeleteMapping("/{id}")
+    @ResponseBody
+    fun deleteTaskById(@PathVariable id: String): TaskResponse = TaskResponse(taskService.deleteById(id))
+
     @PutMapping("/{id}")
     fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): ResponseEntity<Any> {
         val updatedTask = request.toTask()
@@ -30,9 +34,5 @@ class TaskController(private val taskService: TaskService) {
         }
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseBody
-    fun deleteTask(@PathVariable id: String): TaskResponse {
-        return TaskResponse(taskService.deleteById(id))
-    }
+
 }

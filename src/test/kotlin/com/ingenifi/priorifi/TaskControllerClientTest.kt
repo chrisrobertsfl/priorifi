@@ -82,6 +82,26 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
             .consumeWith { it -> it.responseBody?.shouldBe(taskResponse) }
     }
 
+    @Test
+    fun `Delete Task by Id should raise exception when not found`() {
+        `when`(taskService.deleteById("id")).thenThrow(taskNotFoundException)
+
+        webTestClient.delete().uri("/tasks/{id}", "id").exchange()
+            .expectStatus().isNotFound
+            .expectBody<ApiError>()
+            .consumeWith { it -> it.responseBody?.shouldBe(ApiError.from(taskNotFoundException)) }
+    }
+
+    @Test
+    fun `Delete Task by Id should be successful`() {
+        `when`(taskService.deleteById(task.id!!)).thenReturn(task)
+
+        webTestClient.delete().uri("/tasks/{id}", task.id).exchange()
+            .expectStatus().isOk
+            .expectBody<TaskResponse>()
+            .consumeWith { it -> it.responseBody?.shouldBe(taskResponse) }
+    }
+
 
     @Disabled
     @Test
@@ -96,24 +116,6 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
                     it.id.shouldNotBeNull()
                     it.name shouldBe request.name
                     it.description shouldBe request.description
-                }
-            }
-    }
-
-
-    @Disabled
-    @Test
-    fun `should delete task`() {
-        val inserted = insertTasks(1).first()
-        val taskId = inserted.id!!
-        webTestClient.delete().uri("/tasks/{id}", taskId).exchange()
-            .expectStatus().isOk
-            .expectBody<TaskResponse>()
-            .consumeWith { result ->
-                result.responseBody?.asClue {
-                    it.id.shouldNotBeNull()
-                    it.name shouldBe "Task 1"
-                    it.description shouldBe "Description 1"
                 }
             }
     }

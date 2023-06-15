@@ -9,14 +9,9 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/tasks")
 class TaskController(private val taskService: TaskService) {
 
-
     @PostMapping
-    fun createTask(@RequestBody request: CreateTaskRequest): ResponseEntity<Any> =
-        when (val task = taskService.createTask(request.toTask())) {
-            is Right -> ok(TaskResponse(task.value))
-            is Left -> badRequest().body(task.value)
-        }
-
+    @ResponseBody
+    fun createTask(@RequestBody request: CreateTaskRequest): TaskResponse = TaskResponse(taskService.createTask(request.toTask()))
     @GetMapping
     fun getAllTasks(): ResponseEntity<List<TaskResponse>> = ok(taskService.findAll().map { TaskResponse(it) })
 

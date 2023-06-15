@@ -34,6 +34,7 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
     @Test
     fun `Create Task is successful`() {
         `when`(taskService.createTask(task.copy(id = null))).thenReturn(task)
+
         webTestClient.post()
             .uri("/tasks")
             .contentType(APPLICATION_JSON)
@@ -48,6 +49,7 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
     fun `Create Task should create a bad request`() {
         val createdTask = task.copy(name = "")
         `when`(taskService.createTask(createdTask.copy(id = null))).thenThrow(taskNameIsMissingException)
+
         webTestClient.post().uri("/tasks").contentType(APPLICATION_JSON).bodyValue(CreateTaskRequest("", createdTask.description)).exchange()
             .expectStatus().isBadRequest
             .expectBody<ApiError>()
@@ -61,9 +63,7 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
         webTestClient.get().uri("/tasks").exchange()
             .expectStatus().isOk
             .expectBody<List<TaskResponse>>()
-            .consumeWith {
-                it.responseBody?.shouldBe(listOf(taskResponse))
-            }
+            .consumeWith { it.responseBody?.shouldBe(listOf(taskResponse)) }
     }
 
     @Disabled
@@ -83,12 +83,18 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
             }
     }
 
-    @Disabled
     @Test
-    fun `should find task by id`() {
+    fun `Find Task by Id should raise exception when not found`() {
+        `when`(taskService.findById("id")).thenThrow(taskNotFoundException)
+
+        webTestClient.get().uri("/tasks/{id}", "id").exchange()
+            .expectStatus().isNotFound
+            .expectBody<ApiError>()
+            .consumeWith { it ->
+                it.responseBody?.shouldBe(ApiError.from(taskNotFoundException))
+            }
 
     }
-
 
     @Disabled
     @Test
@@ -111,6 +117,7 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
         val task = Task("generated-id", "name", "description")
         val taskResponse = TaskResponse(task.id, task.name, task.description)
         val taskNameIsMissingException = TaskValidationException("Invalid task request", listOf(ValidationError("Task name is missing")))
+        val taskNotFoundException = TaskNotFoundException(errorMessage = "Task id 'id' not found")
     }
 }
 

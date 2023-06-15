@@ -8,17 +8,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class TaskService(private val taskRepository: TaskRepository, private val validationEngine: Engine, private val idGenerator: IdGenerator) {
-    fun createTask(request: Task): Task {
-        val validateRequest = validateRequest(request)
-        println("validateRequest = ${validateRequest}")
-        println("idGenerator = ${idGenerator}")
-        val id = idGenerator.generate()
-        println("id = ${id}")
-        val copy = validateRequest.copy(id = id)
-        println("taskRepository = ${taskRepository}")
-        println("copy = ${copy}")
-        return taskRepository.insert(copy)
-    }
+    fun createTask(request: Task): Task = taskRepository.insert(validateRequest(request).copy(id = idGenerator.generate()))
 
     private fun validateRequest(request: Task): Task {
         val validationErrors = validationEngine
@@ -27,7 +17,7 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
             .retrieveFacts { it is ValidationError }
             .map { it as ValidationError }
         if (validationErrors.isNotEmpty()) {
-            throw TaskValidationException("Invalid task request", validationErrors)
+            throw TaskValidationException(errors = validationErrors)
         }
         return request
     }
@@ -49,30 +39,11 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
         }
     }
 
-    fun deleteById(id: String): Either<List<ValidationError>, Task> {
-        return when (val validationOrTask = findById(id)) {
-            is Left -> validationOrTask
-            is Right -> {
-                taskRepository.deleteById(id)
-                validationOrTask
-            }
-        }
-    }
+    fun findById(id: String): Task = taskRepository.findById(id).orElseThrow { TaskNotFoundException(errorMessage = "Task with id '$id' not found") }
 
-    fun findById(id: String): Either<List<ValidationError>, Task> {
-        val found = taskRepository.findById(id)
-        return if (found.isPresent)
-            Right(found.get())
-        else
-            Left(listOf(ValidationError("Cannot find task by id '$id'")))
-    }
-    fun findId(id: String): Task = taskRepository.findById(id).orElseThrow { TaskValidationException("Task not found", listOf(ValidationError("Task with id '$id' not found"))) }
-
-    fun deleteId(id: String) : Task  {
-        val found = findId(id)
+    fun deleteById(id: String): Task {
+        val found = findById(id)
         taskRepository.deleteById(id)
         return found
     }
-
-
 }

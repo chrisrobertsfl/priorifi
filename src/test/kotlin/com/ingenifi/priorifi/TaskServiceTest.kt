@@ -57,6 +57,7 @@ class TaskServiceTest(@Autowired val service: TaskService) {
         assertDoesNotThrow { service.findById("id") }
     }
 
+
     companion object {
         val task = Task("id", "name", "description")
         val taskNotFoundException = TaskNotFoundException(errorMessage = "Task with id 'id' not found")

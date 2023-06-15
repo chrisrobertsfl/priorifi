@@ -115,6 +115,16 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
     }
 
     @Test
+    fun `Update Task should raise exception when not found `() {
+        `when`(taskService.updateTask(task)).thenThrow(taskNotFoundException)
+
+        val request = UpdateTaskRequest(id = task.id!!, name = task.name, description = task.description)
+        webTestClient.put().uri("/tasks/{id}", "id").contentType(APPLICATION_JSON).bodyValue(request).exchange()
+            .expectStatus().isNotFound
+            .expectBody<ApiError>()
+            .consumeWith { it -> it.responseBody?.shouldBe(ApiError.from(taskNotFoundException)) }
+    }
+    @Test
     fun `Update Task should be successful`() {
 
         val updated = task.copy(name = "updated name")

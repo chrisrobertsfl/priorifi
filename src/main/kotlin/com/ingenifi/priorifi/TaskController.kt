@@ -14,11 +14,12 @@ class TaskController(private val taskService: TaskService) {
     fun createTask(@RequestBody request: CreateTaskRequest): TaskResponse = TaskResponse(taskService.createTask(request.toTask()))
 
     @GetMapping
-    fun getAllTasks(): ResponseEntity<List<TaskResponse>> = ok(taskService.findAll().map { TaskResponse(it) })
+    @ResponseBody
+    fun getAllTasks(): List<TaskResponse> = taskService.findAll().map { TaskResponse(it) }
 
     @GetMapping("/{id}")
     @ResponseBody
-    fun findTaskById(@PathVariable id: String): TaskResponse  = TaskResponse(taskService.findById(id))
+    fun findTaskById(@PathVariable id: String): TaskResponse = TaskResponse(taskService.findById(id))
 
     @PutMapping("/{id}")
     fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): ResponseEntity<Any> {
@@ -28,7 +29,6 @@ class TaskController(private val taskService: TaskService) {
             is Left -> badRequest().body(task.value)
         }
     }
-    // Deployment date 06/19/2023
 
     @DeleteMapping("/{id}")
     @ResponseBody

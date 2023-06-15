@@ -35,11 +35,7 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
     fun `Create Task is successful`() {
         `when`(taskService.createTask(task.copy(id = null))).thenReturn(task)
 
-        webTestClient.post()
-            .uri("/tasks")
-            .contentType(APPLICATION_JSON)
-            .bodyValue(CreateTaskRequest(task.name, task.description))
-            .exchange()
+        webTestClient.post().uri("/tasks").contentType(APPLICATION_JSON).bodyValue(CreateTaskRequest(task.name, task.description)).exchange()
             .expectStatus().isOk
             .expectBody<TaskResponse>()
             .consumeWith { it -> it.responseBody?.shouldBe(taskResponse) }
@@ -66,6 +62,27 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
             .consumeWith { it.responseBody?.shouldBe(listOf(taskResponse)) }
     }
 
+    @Test
+    fun `Find Task by Id should raise exception when not found`() {
+        `when`(taskService.findById("id")).thenThrow(taskNotFoundException)
+
+        webTestClient.get().uri("/tasks/{id}", "id").exchange()
+            .expectStatus().isNotFound
+            .expectBody<ApiError>()
+            .consumeWith { it -> it.responseBody?.shouldBe(ApiError.from(taskNotFoundException)) }
+    }
+
+    @Test
+    fun `Find Task by Id should be successful`() {
+        `when`(taskService.findById(task.id!!)).thenReturn(task)
+
+        webTestClient.get().uri("/tasks/{id}", task.id).exchange()
+            .expectStatus().isOk
+            .expectBody<TaskResponse>()
+            .consumeWith { it -> it.responseBody?.shouldBe(taskResponse) }
+    }
+
+
     @Disabled
     @Test
     fun `should update task`() {
@@ -83,18 +100,6 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
             }
     }
 
-    @Test
-    fun `Find Task by Id should raise exception when not found`() {
-        `when`(taskService.findById("id")).thenThrow(taskNotFoundException)
-
-        webTestClient.get().uri("/tasks/{id}", "id").exchange()
-            .expectStatus().isNotFound
-            .expectBody<ApiError>()
-            .consumeWith { it ->
-                it.responseBody?.shouldBe(ApiError.from(taskNotFoundException))
-            }
-
-    }
 
     @Disabled
     @Test

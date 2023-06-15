@@ -1,10 +1,7 @@
 package com.ingenifi.priorifi
 
-import io.kotest.assertions.asClue
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
@@ -103,22 +100,33 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
     }
 
 
-    @Disabled
     @Test
-    fun `should update task`() {
-        val inserted = insertTasks(1).first()
-        val request = UpdateTaskRequest(inserted.id!!, inserted.name, inserted.description + " now updated")
-        webTestClient.put().uri("/tasks/{id}", inserted.id).contentType(APPLICATION_JSON).bodyValue(request).exchange()
-            .expectStatus().isOk
-            .expectBody<TaskResponse>()
-            .consumeWith { result ->
-                result.responseBody?.asClue {
-                    it.id.shouldNotBeNull()
-                    it.name shouldBe request.name
-                    it.description shouldBe request.description
-                }
+    fun `Update Task should raise exception because name is not there`() {
+        val update = task.copy(name = "")
+        `when`(taskService.updateTask(update)).thenThrow(taskNameIsMissingException)
+
+        val request = UpdateTaskRequest(id = update.id!!, name = update.name, description = update.description)
+        webTestClient.put().uri("/tasks/{id}", "id").contentType(APPLICATION_JSON).bodyValue(request).exchange()
+            .expectStatus().isBadRequest
+            .expectBody<ApiError>()
+            .consumeWith { it ->
+                it.responseBody?.shouldBe(ApiError.from(taskNameIsMissingException))
             }
     }
+
+    @Test
+    fun `Update Task should be successful`() {
+
+        val updated = task.copy(name = "updated name")
+        val request = UpdateTaskRequest(id = updated.id!!, name = updated.name, description = updated.description)
+
+        `when`(taskService.updateTask(updated)).thenReturn(updated)
+        webTestClient.put().uri("/tasks/{id}", "id").contentType(APPLICATION_JSON).bodyValue(request).exchange()
+            .expectStatus().isOk
+            .expectBody<TaskResponse>()
+            .consumeWith { it -> it.responseBody?.shouldBe(taskResponse.copy(name = "updated name")) }
+    }
+
 
     companion object {
         val task = Task("generated-id", "name", "description")

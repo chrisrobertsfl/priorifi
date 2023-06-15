@@ -32,12 +32,7 @@ class TaskService(private val taskRepository: TaskRepository, private val valida
     }
 
     fun findAll(): List<Task> = taskRepository.findAll()
-    fun updateTask(request: Task): Either<List<ValidationError>, Task> {
-        return when (val validationOrTask = validate(request)) {
-            is Left -> validationOrTask
-            is Right -> Right(taskRepository.save(validationOrTask.value))
-        }
-    }
+    fun updateTask(request: Task): Task = taskRepository.save(request)
 
     fun findById(id: String): Task = taskRepository.findById(id).orElseThrow { TaskNotFoundException(errorMessage = "Task with id '$id' not found") }
 

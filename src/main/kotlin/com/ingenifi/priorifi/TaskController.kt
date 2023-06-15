@@ -1,7 +1,6 @@
 package com.ingenifi.priorifi
 
 import arrow.core.Either.*
-import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.*
 import org.springframework.web.bind.annotation.*
 
@@ -26,13 +25,7 @@ class TaskController(private val taskService: TaskService) {
     fun deleteTaskById(@PathVariable id: String): TaskResponse = TaskResponse(taskService.deleteById(id))
 
     @PutMapping("/{id}")
-    fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): ResponseEntity<Any> {
-        val updatedTask = request.toTask()
-        return when (val task = taskService.updateTask(updatedTask)) {
-            is Right -> ok(TaskResponse(task.value))
-            is Left -> badRequest().body(task.value)
-        }
-    }
-
+    @ResponseBody
+    fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): TaskResponse = TaskResponse(taskService.updateTask(request.toTask()))
 
 }

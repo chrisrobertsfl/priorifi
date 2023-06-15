@@ -4,7 +4,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -33,6 +32,7 @@ class TaskServiceTest(@Autowired val service: TaskService) {
         `when`(taskRepository.insert(createdTask)).thenReturn(createdTask)
         service.createTask(Task(null, createdTask.name, createdTask.description)) shouldBe createdTask
     }
+
     @Test
     fun `Find Task by Id should raise exception when id is not found`() {
         val exception = shouldThrow<TaskNotFoundException> { service.findById("id") }
@@ -53,8 +53,23 @@ class TaskServiceTest(@Autowired val service: TaskService) {
 
     @Test
     fun `Delete Task by Id should succeed when id is found`() {
-        `when`(taskRepository.findById("id")).thenReturn(Optional.of(task))
+        `when`(taskRepository.findById(task.id!!)).thenReturn(Optional.of(task))
         assertDoesNotThrow { service.findById("id") }
+    }
+
+    @Test
+    fun `Update Task should raise exception when name is not there`() {
+        `when`(taskRepository.findById(task.id!!)).thenReturn(Optional.of(task))
+        val update = task.copy(name = "")
+        val exception = shouldThrow<TaskValidationException> { service.updateTask(update) }
+        exception shouldBe taskNameMissingException
+    }
+
+    @Test
+    fun `Update Task should raise exception when id is not found`() {
+        `when`(taskRepository.findById(task.id!!)).thenThrow(taskNotFoundException)
+        val exception = shouldThrow<TaskNotFoundException> { service.updateTask(task) }
+        exception shouldBe taskNotFoundException
     }
 
 

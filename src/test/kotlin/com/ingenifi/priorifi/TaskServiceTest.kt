@@ -59,8 +59,8 @@ class TaskServiceTest(@Autowired val service: TaskService) {
 
     @Test
     fun `Update Task should raise exception when name is not there`() {
-        `when`(taskRepository.findById(task.id!!)).thenReturn(Optional.of(task))
         val update = task.copy(name = "")
+        `when`(taskRepository.findById(update.id!!)).thenReturn(Optional.of(task))
         val exception = shouldThrow<TaskValidationException> { service.updateTask(update) }
         exception shouldBe taskNameMissingException
     }
@@ -70,6 +70,14 @@ class TaskServiceTest(@Autowired val service: TaskService) {
         `when`(taskRepository.findById(task.id!!)).thenThrow(taskNotFoundException)
         val exception = shouldThrow<TaskNotFoundException> { service.updateTask(task) }
         exception shouldBe taskNotFoundException
+    }
+
+    @Test
+    fun `Update Task by Id should succeed`() {
+        val update = task.copy(name = "updated name")
+        `when`(taskRepository.findById(update.id!!)).thenReturn(Optional.of(task))
+        `when`(taskRepository.save(update)).thenReturn(update)
+        service.updateTask(update) shouldBe update
     }
 
 

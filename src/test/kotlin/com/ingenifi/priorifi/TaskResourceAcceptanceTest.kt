@@ -1,11 +1,5 @@
 package com.ingenifi.priorifi
 
-import com.ingenifi.priorifi.IntegrationTests.asRegistry
-import com.ingenifi.priorifi.IntegrationTests.dropTasks
-import com.ingenifi.priorifi.IntegrationTests.findAllTasks
-import com.ingenifi.priorifi.IntegrationTests.insertTasks
-import com.ingenifi.priorifi.IntegrationTests.mongoTestContainer
-import com.ingenifi.priorifi.IntegrationTests.numberOfTasks
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach

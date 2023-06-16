@@ -2,9 +2,12 @@ package com.ingenifi.priorifi
 
 import com.ingenifi.priorifi.IntegrationTests.asRegistry
 import com.ingenifi.priorifi.IntegrationTests.dropTasks
+import com.ingenifi.priorifi.IntegrationTests.findAllTasks
+import com.ingenifi.priorifi.IntegrationTests.insertTasks
 import com.ingenifi.priorifi.IntegrationTests.mongoTestContainer
 import com.ingenifi.priorifi.IntegrationTests.numberOfTasks
 import io.kotest.matchers.shouldBe
+import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.http.MediaType.APPLICATION_JSON
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -21,45 +24,35 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @Autowired val mongoTemplate: MongoTemplate) {
+class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @Autowired val mongodb: MongoTemplate) {
 
     @Autowired
     lateinit var idGenerator: IdGenerator
 
+    val client = WebClient(webTestClient, "tasks")
+
     @BeforeEach
     fun fixture() {
-        mongoTemplate.dropTasks()
+        mongodb.dropTasks()
         (idGenerator as NumericalIdGenerator).reset()
     }
 
     @Test
-    fun `First - Create Task is successful`() {
-        val response = webTestClient.post().uri("/tasks")
-            .contentType(APPLICATION_JSON)
-            .bodyValue(CreateTaskRequest("name virtual", "description virtual"))
-            .exchange()
-            .expectStatus().isOk
-            .returnResult(TaskResponse::class.java)
-            .responseBody
-            .blockFirst()
-
-        response shouldBe TaskResponse("1", "name virtual", "description virtual")
-        mongoTemplate.numberOfTasks() shouldBe 1
-    }
+    fun `Create Task is successful`() = assertAll(
+        { client.post(CreateTaskRequest("name virtual", "description virtual"), TaskResponse("1", "name virtual", "description virtual")) },
+        { mongodb.numberOfTasks() shouldBe 1 })
 
     @Test
-    fun `Second - Create Task is successful`() {
-        val response = webTestClient.post().uri("/tasks")
-            .contentType(APPLICATION_JSON)
-            .bodyValue(CreateTaskRequest("name virtual", "description virtual"))
-            .exchange()
-            .expectStatus().isOk
-            .returnResult(TaskResponse::class.java)
-            .responseBody
-            .blockFirst()
+    fun `Create Task should create a bad request`() = assertAll(
+        { client.post(CreateTaskRequest("", "description"), ApiError.from(TaskValidationException("Invalid Task", listOf(ValidationError("Task name is missing")))), BAD_REQUEST) },
+        { mongodb.numberOfTasks() shouldBe 0 })
 
-        response shouldBe TaskResponse("1", "name virtual", "description virtual")
-        mongoTemplate.numberOfTasks() shouldBe 1
+
+    @Test
+    fun `Get all Tasks is successful`() {
+        mongodb.insertTasks(1)
+        client.get(TaskListResponse(mongodb.findAllTasks()))
+        mongodb.numberOfTasks() shouldBe 1
     }
 
     companion object {

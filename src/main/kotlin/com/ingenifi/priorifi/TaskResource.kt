@@ -14,7 +14,7 @@ class TaskResource(private val taskService: TaskService) {
 
     @GetMapping
     @ResponseBody
-    fun getAllTasks(): List<TaskResponse> = taskService.findAll().map { TaskResponse(it) }
+    fun getAllTasks(): TaskListResponse = TaskListResponse(taskService.findAll())
 
     @GetMapping("/{id}")
     @ResponseBody

@@ -48,8 +48,8 @@ class TaskResourceTest(@Autowired val webTestClient: WebTestClient, @Autowired v
 
         webTestClient.get().uri("/tasks").exchange()
             .expectStatus().isOk
-            .expectBody<List<TaskResponse>>()
-            .consumeWith { it.responseBody?.shouldBe(listOf(taskResponse)) }
+            .expectBody<TaskListResponse>()
+            .consumeWith { it.responseBody?.shouldBe(taskListResponse) }
     }
 
     @Test
@@ -137,6 +137,7 @@ class TaskResourceTest(@Autowired val webTestClient: WebTestClient, @Autowired v
         val taskResponse = TaskResponse(task.id, task.name, task.description)
         val taskNameIsMissingException = TaskValidationException("Invalid task request", listOf(ValidationError("Task name is missing")))
         val taskNotFoundException = TaskNotFoundException(errorMessage = "Task id 'id' not found")
+        val taskListResponse = TaskListResponse(listOf(task))
     }
 }
 

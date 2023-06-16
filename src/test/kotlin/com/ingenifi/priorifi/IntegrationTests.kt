@@ -13,15 +13,15 @@ object IntegrationTests {
         return fun(registry: DynamicPropertyRegistry) {
             registry.add("spring.data.mongodb.host", ::getHost)
             registry.add("spring.data.mongodb.port", ::getFirstMappedPort)
-
         }
     }
 
-    fun MongoTemplate.insertTasks(howMany: Int, modify: (Task) -> Task = { it }) = this.insert((1..howMany).map { modify(Task("$it", "Task $it", "Description $it")) }, "tasks")
+    fun MongoTemplate.insertTasks(howMany: Int, modify: (Task) -> Task = { it }): MongoTemplate {
+        this.insert((1..howMany).map { modify(Task("$it", "Task $it", "Description $it")) }, "tasks")
+        return this
+    }
 
-    //fun MongoTemplate.insertTasks(howMany: Int) = this.insert((1..howMany).map { Task("$it", "Task $it", "Description $it") }, "tasks")
     fun MongoTemplate.numberOfTasks() = this.count(Query(), "tasks")
-
     fun MongoTemplate.findAllTasks() = this.findAll(Task::class.java, "tasks")
     fun MongoTemplate.dropTasks() = this.dropCollection("tasks")
 }

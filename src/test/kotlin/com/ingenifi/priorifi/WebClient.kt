@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import kotlin.reflect.KClass
 
 class WebClient(val webTestClient: WebTestClient, collectionName: String) {
     val path: String

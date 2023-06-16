@@ -37,13 +37,13 @@ class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @A
     }
 
     @Test
-    fun `Create Task is successful`() = assertAll(
+    fun `Create Task is successful`() = assertAll("Create Task is successful",
         { mongodb.numberOfTasks() shouldBe 0 },
         { client.post(CreateTaskRequest("name virtual", "description virtual"), TaskResponse("1", "name virtual", "description virtual")) },
         { mongodb.numberOfTasks() shouldBe 1 })
 
     @Test
-    fun `Create Task should create a bad request`() = assertAll(
+    fun `Create Task should create a bad request`() = assertAll("Create Task should create a bad request",
         { client.post(CreateTaskRequest("", "description"), ApiError.from(taskNameIsMissing), BAD_REQUEST) },
         { mongodb.numberOfTasks() shouldBe 0 })
 
@@ -70,8 +70,7 @@ class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @A
     fun `Update Task should raise exception because name is not there`() = client.put("1", UpdateTaskRequest("", "description"), ApiError.from(taskNameIsMissing), BAD_REQUEST)
 
     @Test
-    fun `Update Task should raise exception when not found`() = assertAll(
-        "Update Task should raise exception when not found",
+    fun `Update Task should raise exception when not found`() = assertAll("Update Task should raise exception when not found",
         { client.put("id", UpdateTaskRequest.from(mongodb.insertTasks(1).findAllTasks().first()), ApiError.from(taskWithIdNotFound), NOT_FOUND) },
         { mongodb.numberOfTasks() shouldBe 1 })
 

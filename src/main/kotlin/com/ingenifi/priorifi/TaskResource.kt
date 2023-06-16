@@ -26,6 +26,6 @@ class TaskResource(private val taskService: TaskService) {
 
     @PutMapping("/{id}")
     @ResponseBody
-    fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): TaskResponse = TaskResponse(taskService.updateTask(request.toTask()))
+    fun updateTask(@PathVariable id: String, @RequestBody request: UpdateTaskRequest): TaskResponse = TaskResponse(taskService.updateTask(request.toTask(id)))
 
 }

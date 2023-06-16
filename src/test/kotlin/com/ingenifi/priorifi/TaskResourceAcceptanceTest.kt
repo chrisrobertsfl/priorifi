@@ -77,10 +77,26 @@ class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @A
     }
 
     @Test
-    fun `Update Task should raise exception because name is not there`() {
+    fun `Update Task should raise exception because name is not there`() = client.put("1", UpdateTaskRequest("", "description"), ApiError.from(taskNameIsMissing), BAD_REQUEST)
+
+
+    @Test
+    fun `Update Task should raise exception when not found`() {
         mongodb.insertTasks(1)
-        client.put("1", UpdateTaskRequest.from( mongodb.findAllTasks().first().copy(name = "")), ApiError.from(taskNameIsMissing), BAD_REQUEST)
-        mongodb.numberOfTasks() shouldBe 1
+        assertAll(
+            "Update Task should raise exception when not found",
+            { client.put("id", UpdateTaskRequest.from(mongodb.findAllTasks().first()), ApiError.from(taskWithIdNotFound), NOT_FOUND) },
+            { mongodb.numberOfTasks() shouldBe 1 })
+    }
+
+
+    @Test
+    fun `Update Task should be successful`() {
+        mongodb.insertTasks(1)
+        val updated = mongodb.findAllTasks().first().copy(description = "updated description")
+        assertAll("Update Task should be successful",
+            { client.put("1", UpdateTaskRequest.from(updated), TaskResponse(updated)) },
+            { mongodb.numberOfTasks() shouldBe 1 })
     }
 
     companion object {

@@ -33,4 +33,14 @@ class WebClient(val webTestClient: WebTestClient, collectionName: String) {
             .blockFirst()
         actualResponse shouldBe expectedResponse
     }
+
+    fun getById(id : String, expectedResponse : Any, expectedStatus : HttpStatus = HttpStatus.OK) {
+        val actualResponse = webTestClient.get().uri("$path/{id}", id)
+            .exchange()
+            .expectStatus().isEqualTo(expectedStatus)
+            .returnResult(expectedResponse.javaClass)
+            .responseBody
+            .blockFirst()
+        actualResponse shouldBe expectedResponse
+    }
 }

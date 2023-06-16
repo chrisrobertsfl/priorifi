@@ -1,7 +1,6 @@
 package com.ingenifi.priorifi
 
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.findAll
 import org.springframework.data.mongodb.core.query.Query
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.MongoDBContainer
@@ -18,7 +17,9 @@ object IntegrationTests {
         }
     }
 
-    fun MongoTemplate.insertTasks(howMany: Int) = this.insert((1..howMany).map { Task("$it", "Task $it", "Description $it") }, "tasks")
+    fun MongoTemplate.insertTasks(howMany: Int, modify: (Task) -> Task = { it }) = this.insert((1..howMany).map { modify(Task("$it", "Task $it", "Description $it")) }, "tasks")
+
+    //fun MongoTemplate.insertTasks(howMany: Int) = this.insert((1..howMany).map { Task("$it", "Task $it", "Description $it") }, "tasks")
     fun MongoTemplate.numberOfTasks() = this.count(Query(), "tasks")
 
     fun MongoTemplate.findAllTasks() = this.findAll(Task::class.java, "tasks")

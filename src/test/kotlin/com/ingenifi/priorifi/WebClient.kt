@@ -34,7 +34,7 @@ class WebClient(val webTestClient: WebTestClient, collectionName: String) {
         actualResponse shouldBe expectedResponse
     }
 
-    fun getById(id : String, expectedResponse : Any, expectedStatus : HttpStatus = HttpStatus.OK) {
+    fun get(id : String, expectedResponse : Any, expectedStatus : HttpStatus = HttpStatus.OK) {
         val actualResponse = webTestClient.get().uri("$path/{id}", id)
             .exchange()
             .expectStatus().isEqualTo(expectedStatus)
@@ -45,7 +45,7 @@ class WebClient(val webTestClient: WebTestClient, collectionName: String) {
     }
 
 
-    fun deleteById(id : String, expectedResponse : Any, expectedStatus : HttpStatus = HttpStatus.OK) {
+    fun delete(id : String, expectedResponse : Any, expectedStatus : HttpStatus = HttpStatus.OK) {
         val actualResponse = webTestClient.delete().uri("$path/{id}", id)
             .exchange()
             .expectStatus().isEqualTo(expectedStatus)
@@ -54,4 +54,18 @@ class WebClient(val webTestClient: WebTestClient, collectionName: String) {
             .blockFirst()
         actualResponse shouldBe expectedResponse
     }
+
+
+    fun put(id : String, request: Any, expectedResponse: Any, expectedStatus: HttpStatus = HttpStatus.OK) {
+        val actualResponse = webTestClient.put().uri("$path/{id}", id)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isEqualTo(expectedStatus)
+            .returnResult(expectedResponse.javaClass)
+            .responseBody
+            .blockFirst()
+        actualResponse shouldBe expectedResponse
+    }
+
 }

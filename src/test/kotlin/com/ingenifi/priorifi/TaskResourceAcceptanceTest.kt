@@ -45,7 +45,7 @@ class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @A
 
     @Test
     fun `Create Task should create a bad request`() = assertAll(
-        { client.post(CreateTaskRequest("", "description"), ApiError.from(TaskValidationException("Invalid Task", listOf(ValidationError("Task name is missing")))), BAD_REQUEST) },
+        { client.post(CreateTaskRequest("", "description"), ApiError.from(taskNameIsMissing), BAD_REQUEST) },
         { mongodb.numberOfTasks() shouldBe 0 })
 
     @Test
@@ -57,23 +57,30 @@ class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @A
     }
 
     @Test
-    fun `Find Task by Id should raise exception when not found`() = client.getById("id", ApiError.from(taskWithIdNotFound), NOT_FOUND)
+    fun `Find Task by Id should raise exception when not found`() = client.get("id", ApiError.from(taskWithIdNotFound), NOT_FOUND)
 
     @Test
     fun `Find Task by Id should be successful`() {
         mongodb.insertTasks(1)
-        client.getById("1", mongodb.findAllTasks().first())
+        client.get("1", mongodb.findAllTasks().first())
     }
 
     @Test
-    fun `Delete Task by Id should raise exception when not found`() = client.deleteById("id", ApiError.from(taskWithIdNotFound), NOT_FOUND)
+    fun `Delete Task by Id should raise exception when not found`() = client.delete("id", ApiError.from(taskWithIdNotFound), NOT_FOUND)
 
     @Test
     fun `Delete Task by Id should be successful`() {
         mongodb.insertTasks(1)
         assertAll("Delete Task by Id should be successful",
-            { client.deleteById("1", mongodb.findAllTasks().first()) },
+            { client.delete("1", mongodb.findAllTasks().first()) },
             { mongodb.numberOfTasks() shouldBe 0 })
+    }
+
+    @Test
+    fun `Update Task should raise exception because name is not there`() {
+        mongodb.insertTasks(1)
+        client.put("1", UpdateTaskRequest.from( mongodb.findAllTasks().first().copy(name = "")), ApiError.from(taskNameIsMissing), BAD_REQUEST)
+        mongodb.numberOfTasks() shouldBe 1
     }
 
     companion object {
@@ -85,6 +92,7 @@ class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @A
         fun registry(registry: DynamicPropertyRegistry) = mongo.asRegistry()
 
         val taskWithIdNotFound = TaskNotFoundException(errorMessage = "Task with id 'id' not found")
+        val taskNameIsMissing = TaskValidationException("Invalid Task", listOf(ValidationError("Task name is missing")))
     }
 
     @TestConfiguration

@@ -1,68 +1,80 @@
 package com.ingenifi.priorifi
 
-import com.mongodb.client.MongoClient
-import io.kotest.assertions.asClue
-import io.kotest.matchers.booleans.shouldBeFalse
-import io.kotest.matchers.booleans.shouldBeTrue
+import com.ingenifi.priorifi.IntegrationTests.asRegistry
+import com.ingenifi.priorifi.IntegrationTests.dropTasks
+import com.ingenifi.priorifi.IntegrationTests.mongoTestContainer
+import com.ingenifi.priorifi.IntegrationTests.numberOfTasks
 import io.kotest.matchers.shouldBe
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assumptions.assumeFalse
-import org.junit.jupiter.api.Assumptions.assumeTrue
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.query.Query
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
-import org.springframework.test.web.reactive.server.expectBody
-import org.testcontainers.containers.MongoDBContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @Autowired val mongoTemplate: MongoTemplate, @Autowired val taskRepository: TaskRepository) {
+class TaskResourceAcceptanceTest(@Autowired val webTestClient: WebTestClient, @Autowired val mongoTemplate: MongoTemplate) {
+
+    @Autowired
+    lateinit var idGenerator: IdGenerator
+
+    @BeforeEach
+    fun fixture() {
+        mongoTemplate.dropTasks()
+        (idGenerator as NumericalIdGenerator).reset()
+    }
+
+    @Test
+    fun `First - Create Task is successful`() {
+        val response = webTestClient.post().uri("/tasks")
+            .contentType(APPLICATION_JSON)
+            .bodyValue(CreateTaskRequest("name virtual", "description virtual"))
+            .exchange()
+            .expectStatus().isOk
+            .returnResult(TaskResponse::class.java)
+            .responseBody
+            .blockFirst()
+
+        response shouldBe TaskResponse("1", "name virtual", "description virtual")
+        mongoTemplate.numberOfTasks() shouldBe 1
+    }
+
+    @Test
+    fun `Second - Create Task is successful`() {
+        val response = webTestClient.post().uri("/tasks")
+            .contentType(APPLICATION_JSON)
+            .bodyValue(CreateTaskRequest("name virtual", "description virtual"))
+            .exchange()
+            .expectStatus().isOk
+            .returnResult(TaskResponse::class.java)
+            .responseBody
+            .blockFirst()
+
+        response shouldBe TaskResponse("1", "name virtual", "description virtual")
+        mongoTemplate.numberOfTasks() shouldBe 1
+    }
 
     companion object {
         @Container
-        val mongodbContainer = MongoDBContainer("mongo:5.0").apply {
-            withExposedPorts(27017)
-       }
+        val mongo = mongoTestContainer()
 
         @JvmStatic
         @DynamicPropertySource
-        fun datasourceConfiguration(registry: DynamicPropertyRegistry) {
-            registry.add("spring.data.mongodb.host", mongodbContainer::getHost)
-            registry.add("spring.data.mongodb.port", mongodbContainer::getFirstMappedPort)
-
-        }
-
+        fun registry(registry: DynamicPropertyRegistry) = mongo.asRegistry()
     }
 
-    private fun insertTasks(howMany: Int) = mongoTemplate.insert((1..howMany).map { Task(null, "Task $it", "Description $it") }, "tasks")
-    private fun numberOfTasks() = mongoTemplate.count(Query(), "tasks")
-
-    @BeforeEach
-    fun fixture() = mongoTemplate.dropCollection("tasks")
-
-    @Test
-    fun `Create Task is successful`() {
-        webTestClient.post().uri("/tasks").contentType(APPLICATION_JSON).bodyValue(CreateTaskRequest("name virtual", "description virtual")).exchange()
-            .expectStatus().isOk
-            .expectBody<TaskResponse>()
-            .consumeWith { it ->
-                it.responseBody?.asClue {
-                    it.name shouldBe "name virtual"
-                    it.description shouldBe "description virtual"
-                }
-            }
-        numberOfTasks() shouldBe 1
+    @TestConfiguration
+    class TestConfig {
+        @Bean
+        fun idGenerator(): IdGenerator = NumericalIdGenerator()
     }
 }
 

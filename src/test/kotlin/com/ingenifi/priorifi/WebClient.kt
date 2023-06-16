@@ -43,4 +43,15 @@ class WebClient(val webTestClient: WebTestClient, collectionName: String) {
             .blockFirst()
         actualResponse shouldBe expectedResponse
     }
+
+
+    fun deleteById(id : String, expectedResponse : Any, expectedStatus : HttpStatus = HttpStatus.OK) {
+        val actualResponse = webTestClient.delete().uri("$path/{id}", id)
+            .exchange()
+            .expectStatus().isEqualTo(expectedStatus)
+            .returnResult(expectedResponse.javaClass)
+            .responseBody
+            .blockFirst()
+        actualResponse shouldBe expectedResponse
+    }
 }

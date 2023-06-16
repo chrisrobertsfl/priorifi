@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/tasks")
-class TaskController(private val taskService: TaskService) {
+class TaskResource(private val taskService: TaskService) {
 
     @PostMapping
     @ResponseBody

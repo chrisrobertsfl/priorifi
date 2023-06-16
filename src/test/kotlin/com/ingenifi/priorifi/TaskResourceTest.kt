@@ -8,22 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.data.mongodb.core.MongoTemplate
-import org.springframework.data.mongodb.core.query.Query
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class TaskControllerClientTest(@Autowired taskController: TaskController, @Autowired val webTestClient: WebTestClient, @Autowired val mongoTemplate: MongoTemplate) {
+class TaskResourceTest(@Autowired val webTestClient: WebTestClient, @Autowired val mongoTemplate: MongoTemplate) {
 
     @MockBean
     lateinit var taskService: TaskService
-
-    @MockBean
-    lateinit var idGenerator: IdGenerator
-
-    private fun insertTasks(howMany: Int) = mongoTemplate.insert((1..howMany).map { Task(null, "Task $it", "Description $it") }, "tasks")
-    private fun numberOfTasks() = mongoTemplate.count(Query(), "tasks")
 
     @BeforeEach
     fun fixture() = mongoTemplate.dropCollection("tasks")
@@ -124,6 +117,7 @@ class TaskControllerClientTest(@Autowired taskController: TaskController, @Autow
             .expectBody<ApiError>()
             .consumeWith { it -> it.responseBody?.shouldBe(ApiError.from(taskNotFoundException)) }
     }
+
     @Test
     fun `Update Task should be successful`() {
 
